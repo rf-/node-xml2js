@@ -347,6 +347,56 @@ module.exports =
       actual = builder.buildObject data
       diffeq expected, actual
       test.finish()
+
+  'test round-trip explicitChildren & preserveChildrenOrder with self-closing tag': (test) ->
+    xml = '<a id="0"><b id="1">Text B1</b><c/></a>'
+    expected = """
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <a id="0">
+      <b id="1">Text B1</b>
+      <c/>
+    </a>
+
+    """
+    opts = cdata: true, explicitChildren: true, preserveChildrenOrder: true
+    parser_opts = explicitChildren: true, preserveChildrenOrder: true
+    parser = new xml2js.Parser parser_opts
+    builder = new xml2js.Builder opts
+    parser.parseString xml, (err, data) ->
+      equ err, null
+      actual = builder.buildObject data
+      diffeq expected, actual
+      test.finish()
+
+  'test round-trip explicitChildren & preserveChildrenOrder & charsAsChildren': (test) ->
+    xml = '<a id="0">No, <b id="1">this</b> is a knife</a>'
+    expected = """
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <a id="0">
+      No, 
+      <b id="1">this</b>
+       is a knife
+    </a>
+
+    """
+    opts =
+      cdata: true
+      explicitChildren: true
+      preserveChildrenOrder: true
+      charsAsChildren: true
+    parser_opts =
+      explicitChildren: true
+      preserveChildrenOrder: true
+      charsAsChildren: true
+    parser = new xml2js.Parser parser_opts
+    builder = new xml2js.Builder opts
+    parser.parseString xml, (err, data) ->
+      require('fs').writeFileSync('temp.json', JSON.stringify(data, null, 2))
+      equ err, null
+      actual = builder.buildObject data
+      diffeq expected, actual
+      test.finish()
+
   'test children as single key objects': (test) ->
     obj = {
       a: {
@@ -387,6 +437,7 @@ module.exports =
     actual = builder.buildObject obj
     diffeq expected, actual
     test.finish()
+
   'test children without any name': (test) ->
     obj = {
       a: {

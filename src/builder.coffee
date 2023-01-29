@@ -66,7 +66,7 @@ class exports.Builder
             element = element.att(attr, value)
 
         # Char data (CDATA, etc.)
-        if obj? and charkey of obj
+        if obj? and charkey of obj and not (@options.charsAsChildren and childkey of obj)
           child = obj[charkey]
           if @options.cdata && requiresCDATA child
             element = element.raw wrapCDATA child
@@ -78,13 +78,20 @@ class exports.Builder
           child = obj[childkey]
           if Array.isArray child
             children_as_array = true
+
             for own index, entry of child
               if typeof entry is "object"
-                if ( Object.keys(entry).length is 1 )
-                  name = Object.keys(entry)[0]
-                  element = render(element.ele(name),entry[name]).up()
+                if '#name' of entry && entry['#name'] == '__text__'
+                  entryStr = entry[charkey]
+                  if @options.cdata && requiresCDATA entryStr
+                    element = element.raw wrapCDATA entryStr
+                  else
+                    element = element.txt entryStr
                 else if '#name' of entry
                   element = render(element.ele(entry['#name']), entry).up()
+                else if ( Object.keys(entry).length is 1 )
+                  name = Object.keys(entry)[0]
+                  element = render(element.ele(name),entry[name]).up()
                 else
                   throw new Error('Missing #name attribute when children')
           else if typeof child is "object"
